@@ -37,7 +37,7 @@ def validate_profile_photo(path, age, gender):
     # ageList = ['(0-2)', '(4-6)', '(8-12)', '(15-20)', '(25-32)', '(38-43)', '(48-53)', '(60-100)']
    
     # The age list ranges handles the rule, that have a +/- 25% variation from the original ages.
-    ageList = ['(0-3)', '(3-8)', '(6-15)', '(12-25)', '(20-40)', '(30-54)', '(38-67)', '(45-125)']
+    ageList = ['(0-10)', '(10-20)', '(20-30)', '(30-40)', '(40-50)', '(50-60)', '(60-70)', '(70-100)']
     genderList = ['Male', 'Female']
 
     # Load the models
@@ -82,9 +82,18 @@ def validate_profile_photo(path, age, gender):
     # Check if the specified age falls within the predicted age range
     pred_age_min, pred_age_max = map(int, pred_age[1:-1].split('-'))
     if pred_age_min <= age <= pred_age_max:
-        return True
+        is_valid = True
     else:
-        return False
+        is_valid =  False
+
+    resp = {
+        'number_of_faces' : len(bboxes),
+        'predicted_age' : pred_age,
+        'predicted_gender' : pred_gender,
+        'is_valid' : is_valid
+
+    }
+    return resp
 
 # # Example usage
 # photo = cv.imread('/media/younis/Local Disk/Orginization/LES/photo-validation/images/Photo0086.jpg')
