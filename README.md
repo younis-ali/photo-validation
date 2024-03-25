@@ -1,8 +1,43 @@
-Usage, run the following commands
-    1. python3 -m venv .venv [Create virtual env]
-    2. source .venv/bin/activate [Activate virtual Environment]
-    3. pip install --upgrade pip
-    4. pip install opencv-python
+# Profile Photo Validation API
 
-Inference
-    python AgeGender.py --input '<path to the image>'
+## Usage
+
+1. Create a virtual environment:
+
+    ```bash
+    python3 -m venv .venv
+    ```
+
+2. Activate the virtual environment:
+
+    - On Linux/macOS:
+
+        ```bash
+        source .venv/bin/activate
+        ```
+
+    - On Windows:
+
+        ```bash
+        .venv\Scripts\activate
+        ```
+
+3. Upgrade pip:
+
+    ```bash
+    pip install --upgrade pip
+    ```
+
+4. Install the required packages:
+
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+5. Run the API:
+
+    ```bash
+    uvicorn app:app --reload
+    ```
+
+6. Access the API documentation at http://localhost:8000/docs.
