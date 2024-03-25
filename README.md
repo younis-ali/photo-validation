@@ -37,7 +37,7 @@
 5. Run the API:
 
     ```bash
-    uvicorn app:app --reload
+    uvicorn app:app --port 8000
     ```
 
 6. Access the API documentation at http://localhost:8000/docs.
