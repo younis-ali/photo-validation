@@ -1,15 +1,29 @@
+from typing import Optional
+from pydantic import BaseModel
 from fastapi import FastAPI, File, UploadFile, Form
-from faceValidation import validate_profile_photo
+
+from faceValidation import validation
+
 import os
 
 app = FastAPI()
 
+# Define the request body
+
+class ProfileData(BaseModel):
+    age: Optional[int] = None
+    gender: str = "male"
+    verify_age: bool = False
+    slack: float = 0.25
+
+# Endpoint for photo validation
 
 @app.post("/validate_profile_photo")
-async def validate_photo_endpoint(
-    photo: UploadFile = File(...),
-    age: int = Form(..., description="Enter age"),
-    gender: str = Form(..., description="Select gender", title="Gender", enum=["Male", "Female"])
+async def validate_profile_photo(
+    age: Optional[int] = Form(None),
+    gender: str = Form("male"),
+    slack: float = Form(0.25),
+    photo: UploadFile = File(...)
     ):
    
     # Save the uploaded file to the "images" folder in the current directory
@@ -18,6 +32,9 @@ async def validate_photo_endpoint(
         buffer.write(await photo.read())
     
     # print(save_path)
- 
-    resp = validate_profile_photo(save_path, age, gender)
+
+    resp = validation(save_path, age, gender, slack)
     return {"response": resp}   
+    # print(resp)
+
+    # return {"age": age, "gender": gender, "slack": slack, "filename": save_path}

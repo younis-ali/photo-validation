@@ -20,7 +20,11 @@ def getFaceBox(net, frame, conf_threshold=0.7):
             cv.rectangle(frameOpencvDnn, (x1, y1), (x2, y2), (0, 255, 0), int(round(frameHeight/150)), 8)
     return frameOpencvDnn, bboxes
 
-def validate_profile_photo(path, age, gender):
+
+# function for validating the photo with age
+
+def validate_with_age(path, age, gender, slack):
+    
     photo = cv.imread(path)
 
     # Path to the required models
@@ -64,6 +68,7 @@ def validate_profile_photo(path, age, gender):
     genderNet.setInput(blob)
     genderPreds = genderNet.forward()
     pred_gender = genderList[genderPreds[0].argmax()]
+    pred_gender = pred_gender.lower()
 
     print("Predicted Gender:", pred_gender)
 
@@ -82,7 +87,7 @@ def validate_profile_photo(path, age, gender):
     print(f'min age = {pred_age_min} and max age = {pred_age_max}')
 
     # do a validation check that the age should not be 25% lest than min age and 25% more than max age
-    age_diff = (pred_age_max - pred_age_min) * 0.25
+    age_diff = (pred_age_max - pred_age_min) * slack
     # print(age_diff)
 
     if (pred_age_min - age_diff <= age <= pred_age_max + age_diff) and pred_gender == gender and len(bboxes) == 1:
@@ -96,6 +101,79 @@ def validate_profile_photo(path, age, gender):
         'predicted_age_range' : pred_age,
         'predicted_gender' : pred_gender 
     }
+
+    return resp
+
+# function for validating the photo without age
+def validate_without_age(path, gender):
+    
+    photo = cv.imread(path)
+
+    # Path to the required models
+    faceProto = "./models/opencv_face_detector.pbtxt"
+    faceModel = "./models/opencv_face_detector_uint8.pb"
+
+    genderProto = "./models/gender_deploy.prototxt"
+    genderModel = "./models/gender_net.caffemodel"
+
+    MODEL_MEAN_VALUES = (78.4263377603, 87.7689143744, 114.895847746)
+    # ageList = ['(0-2)', '(4-6)', '(8-12)', '(15-20)', '(25-32)', '(38-43)', '(48-53)', '(60-100)']
+   
+    genderList = ['Male', 'Female']
+
+    # Load the models
+    genderNet = cv.dnn.readNet(genderModel, genderProto)
+    faceNet = cv.dnn.readNet(faceModel, faceProto)
+
+    # Set preferable backend and target (same as before)
+
+    frameOpencvDnn, bboxes = getFaceBox(faceNet, photo)
+    print(len(bboxes))
+
+    # Validation for multiple faces, non-humman faces
+    if len(bboxes) != 1:
+        print("No face detected or multiple faces detected.")
+        return {'message': "No face detected or multiple faces detected.",
+                'is_valid' : False }
+
+    # Get gender
+    bbox = bboxes[0]
+    face = frameOpencvDnn[max(0, bbox[1]):min(bbox[3], frameOpencvDnn.shape[0]), max(0, bbox[0]):min(bbox[2], frameOpencvDnn.shape[1])]
+
+    blob = cv.dnn.blobFromImage(face, 1.0, (227, 227), MODEL_MEAN_VALUES, swapRB=False)
+    genderNet.setInput(blob)
+    genderPreds = genderNet.forward()
+    pred_gender = genderList[genderPreds[0].argmax()]
+    pred_gender = pred_gender.lower()
+
+    print("Predicted Gender:", type(pred_gender))
+
+    # Validation if gender doesnot matches the given gender value
+    if pred_gender != gender:
+        print("Gender does not match.")
+        # return False  # Gender does not match
+
+    if pred_gender == gender and len(bboxes) == 1:
+        is_valid = True
+    else:
+        is_valid = False
+    
+    resp = {
+        'is_valid' : is_valid,
+        'number_of_faces' : len(bboxes),
+        'predicted_gender' : pred_gender 
+    }
+
+    return resp
+
+
+# main function for validating the photo
+def validation(path, age, gender, slack):
+    
+    if age==None:
+        resp = validate_without_age(path, gender)
+    else:
+        resp =  validate_with_age(path, age, gender, slack)
 
     return resp
 
