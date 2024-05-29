@@ -53,7 +53,8 @@ def validate_profile_photo(path, age, gender):
     # Validation for multiple faces, non-humman faces
     if len(bboxes) != 1:
         print("No face detected or multiple faces detected.")
-        return False  # Not exactly one face detected
+        return {'message': "No face detected or multiple faces detected.",
+                'is_valid' : False }
 
     # Get gender
     bbox = bboxes[0]
@@ -69,7 +70,7 @@ def validate_profile_photo(path, age, gender):
     # Validation if gender doesnot matches the given gender value
     if pred_gender != gender:
         print("Gender does not match.")
-        return False  # Gender does not match
+        # return False  # Gender does not match
 
     # Get age
     ageNet.setInput(blob)
@@ -77,22 +78,25 @@ def validate_profile_photo(path, age, gender):
     pred_age_index = agePreds[0].argmax()
     pred_age = ageList[pred_age_index]
 
-    print("Predicted Age:", pred_age)
-
-    # Check if the specified age falls within the predicted age range
     pred_age_min, pred_age_max = map(int, pred_age[1:-1].split('-'))
-    if pred_age_min <= age <= pred_age_max:
+    print(f'min age = {pred_age_min} and max age = {pred_age_max}')
+
+    # do a validation check that the age should not be 25% lest than min age and 25% more than max age
+    age_diff = (pred_age_max - pred_age_min) * 0.25
+    # print(age_diff)
+
+    if (pred_age_min - age_diff <= age <= pred_age_max + age_diff) and pred_gender == gender and len(bboxes) == 1:
         is_valid = True
     else:
-        is_valid =  False
+        is_valid = False
 
     resp = {
+        'is_valid' : is_valid,
         'number_of_faces' : len(bboxes),
-        'predicted_age' : pred_age,
-        'predicted_gender' : pred_gender,
-        'is_valid' : is_valid
-
+        'predicted_age_range' : pred_age,
+        'predicted_gender' : pred_gender 
     }
+
     return resp
 
 # # Example usage
