@@ -1,64 +1,136 @@
-# Profile Photo Validation API
+# Photo Validation API
 
-## Usage
+This FastAPI application allows users to upload a profile photo and validate the user's age and gender, with an optional age verification flag.
 
-1. Create a virtual environment:
+## Features
 
-    ```bash
-    python3 -m venv .venv
-    ```
+- Upload a profile photo
+- Validate user's age and gender
+- Optional age parameter, if given then age will be detected otherwise not
 
-2. Activate the virtual environment:
+## Requirements
 
-    - On Linux/macOS:
+- Python 3.7+
+- FastAPI
+- Pydantic
+- Uvicorn
 
-        ```bash
-        source .venv/bin/activate
-        ```
+## Installation
 
-    - On Windows:
-
-        ```bash
-        .venv\Scripts\activate
-        ```
-
-3. Upgrade pip:
+1. Clone the repository:
 
     ```bash
-    pip install --upgrade pip
+    git clone https://github.com/yourusername/photo-validation.git
+    cd photo-validation
     ```
 
-4. Install the required packages:
+2. Create a virtual environment and activate it:
+
+    ```bash
+    python -m venv venv
+    source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+    ```
+
+3. Install the required dependencies:
 
     ```bash
     pip install -r requirements.txt
     ```
 
-5. Run the API:
-
-    ```bash
-    uvicorn app:app --port 8000
+    The `requirements.txt` should include:
+    ```
+    fastapi
+    uvicorn
     ```
 
-6. Access the API documentation at http://localhost:8000/docs.
+## Running the Application
 
-## API Response
+1. Start the FastAPI application using Uvicorn:
 
-The API response will be in the following format:
+    ```bash
+    uvicorn main:app --reload
+    ```
 
+    The endpoints will be available at `http://127.0.0.1:8000/docs`.
+
+## Usage
+
+### Endpoint: `/validate_profile_photo`
+
+**Method:** POST
+
+**Description:** Validate the user's profile photo, age, gender, and optionally verify the age.
+
+**Request:**
+  - `photo` (UploadFile): The profile photo file.
+  - `age` (int): The user's age optional.
+  - `gender` (str): The user's gender. Must be either "Male" or "Female".
+  - `slack` (bool): predicted age flexibility value. Default is `0.25`.
+
+**Example Request:**
+
+- When `age` is `None`
+```bash
+curl -X 'POST' \
+  'http://127.0.0.1:8000/validate_profile_photo' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: multipart/form-data' \
+  -F 'age=' \
+  -F 'gender=male' \
+  -F 'slack=0.25' \
+  -F 'photo=@pexels-pixabay-415829.jpg;type=image/jpeg'
+  ```
+  Resonse Body
+  ```json
+  {
+  "response": {
+    "is_valid": true,
+    "number_of_faces": 1,
+    "predicted_gender": "male"
+  }
+}
+```
+
+
+- When `age` is given
+```bash
+curl -X 'POST' \
+  'http://127.0.0.1:8000/validate_profile_photo' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: multipart/form-data' \
+  -F 'age=45' \
+  -F 'gender=male' \
+  -F 'slack=0.25' \
+  -F 'photo=@pexels-pixabay-415829.jpg;type=image/jpeg'
+  ```
+Response Body
 ```json
 {
   "response": {
+    "is_valid": false,
     "number_of_faces": 1,
-    "predicted_age": "(20-30)",
-    "predicted_gender": "Male",
-    "is_valid": true
+    "predicted_age_range": "(20-30)",
+    "predicted_gender": "male"
   }
 }
-Where:
-
-number_of_faces: The number of faces detected in the uploaded photo.
-predicted_age: The predicted age range of the person in the photo.
-predicted_gender: The predicted gender of the person in the photo.
-is_valid: A boolean indicating whether the profile photo is valid or not.
-
+```
+- When non-human face image is given
+```bash
+curl -X 'POST' \
+  'http://127.0.0.1:8000/validate_profile_photo' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: multipart/form-data' \
+  -F 'age=' \
+  -F 'gender=male' \
+  -F 'slack=0.25' \
+  -F 'photo=@dog.png;type=image/png'
+```
+- Response Body
+```json
+{
+  "response": {
+    "message": "No face detected or multiple faces detected.",
+    "is_valid": false
+  }
+}
+```
