@@ -69,7 +69,32 @@ This FastAPI application allows users to upload a profile photo and validate the
 
 **Example Request:**
 
-- When `age` is `None`
+- When `age` is `Given`
+```bash
+curl -X 'POST' \
+  'http://127.0.0.1:8000/validate_profile_photo' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: multipart/form-data' \
+  -F 'age=42' \
+  -F 'gender=' \
+  -F 'slack=0.80' \
+  -F 'photo=@photograph.jpg;type=image/jpeg'
+  ```
+  Resonse Body
+  ```json
+  {
+    "response": {
+      "message": "Profile photo successfully varified",
+      "is_valid": true,
+      "number_of_faces": 1,
+      "predicted_age_range": "(50-60)",
+      "predicted_gender": "male"
+    }
+  }
+```
+
+
+- When `age` is none
 ```bash
 curl -X 'POST' \
   'http://127.0.0.1:8000/validate_profile_photo' \
@@ -78,59 +103,53 @@ curl -X 'POST' \
   -F 'age=' \
   -F 'gender=male' \
   -F 'slack=0.25' \
-  -F 'photo=@pexels-pixabay-415829.jpg;type=image/jpeg'
+  -F 'photo=@photograph.jpg;type=image/jpeg'
   ```
-  Resonse Body
-  ```json
-  {
+Response Body
+```json
+{
   "response": {
+    "message": "Profile photo successfully varified",
     "is_valid": true,
     "number_of_faces": 1,
     "predicted_gender": "male"
   }
 }
 ```
+Some more examples of responses in different senarios
 
-
-- When `age` is given
-```bash
-curl -X 'POST' \
-  'http://127.0.0.1:8000/validate_profile_photo' \
-  -H 'accept: application/json' \
-  -H 'Content-Type: multipart/form-data' \
-  -F 'age=45' \
-  -F 'gender=male' \
-  -F 'slack=0.25' \
-  -F 'photo=@pexels-pixabay-415829.jpg;type=image/jpeg'
-  ```
-Response Body
-```json
-{
-  "response": {
-    "is_valid": false,
-    "number_of_faces": 1,
-    "predicted_age_range": "(20-30)",
-    "predicted_gender": "male"
-  }
-}
-```
 - When non-human face image is given
-```bash
-curl -X 'POST' \
-  'http://127.0.0.1:8000/validate_profile_photo' \
-  -H 'accept: application/json' \
-  -H 'Content-Type: multipart/form-data' \
-  -F 'age=' \
-  -F 'gender=male' \
-  -F 'slack=0.25' \
-  -F 'photo=@dog.png;type=image/png'
-```
-- Response Body
+
 ```json
 {
   "response": {
     "message": "No face detected or multiple faces detected.",
     "is_valid": false
+  }
+}
+```
+- When predicted age does not matches with given age
+```json
+{
+  "response": {
+    "message": "Profile photo not verified because the predicted age is outside the acceptable range. You can reconfigure the slack value",
+    "is_valid": false,
+    "number_of_faces": 1,
+    "predicted_age_range": "(50-60)",
+    "predicted_gender": "male"
+  }
+}
+```
+
+- When predicted gender does not matches with given gender
+``` json
+{
+  "response": {
+    "message": "Profile photo not verified because the predicted gender does not match the given gender value",
+    "is_valid": false,
+    "number_of_faces": 1,
+    "predicted_age_range": "(50-60)",
+    "predicted_gender": "male"
   }
 }
 ```
