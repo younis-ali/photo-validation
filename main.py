@@ -34,7 +34,8 @@ async def validate_profile_photo(
     # print(save_path)
 
     resp = validation(save_path, age, gender, slack)
+    print(resp)
     return {"response": resp}   
-    # print(resp)
+    
 
     # return {"age": age, "gender": gender, "slack": slack, "filename": save_path}

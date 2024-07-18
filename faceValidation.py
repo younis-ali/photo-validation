@@ -52,12 +52,11 @@ def validate_with_age(path, age, gender, slack):
     # Set preferable backend and target (same as before)
 
     frameOpencvDnn, bboxes = getFaceBox(faceNet, photo)
-    print(len(bboxes))
+    print("Number of faces detected = ", len(bboxes))
 
     # Validation for multiple faces, non-humman faces
     if len(bboxes) != 1:
-        print("No face detected or multiple faces detected.")
-        return {'message': "No face detected or multiple faces detected.",
+        return {'message': "Profile photo not varified because no face detected or multiple faces detected in the photo.",
                 'is_valid' : False }
 
     # Get gender
@@ -88,14 +87,22 @@ def validate_with_age(path, age, gender, slack):
 
     # do a validation check that the age should not be 25% lest than min age and 25% more than max age
     age_diff = (pred_age_max - pred_age_min) * slack
-    # print(age_diff)
+    print(age_diff)
 
     if (pred_age_min - age_diff <= age <= pred_age_max + age_diff) and pred_gender == gender and len(bboxes) == 1:
+        msg = "Profile photo successfully varified"
         is_valid = True
     else:
         is_valid = False
+    
+    # get the message
+    if  not(pred_age_min - age_diff <= age <= pred_age_max + age_diff):
+        msg = "Profile photo not verified because the predicted age is outside the acceptable range. You can reconfigure the slack value"
+    if not(pred_gender == gender):
+        msg = "Profile photo not verified because the predicted gender does not match the given gender value"
 
     resp = {
+        'message' : msg,
         'is_valid' : is_valid,
         'number_of_faces' : len(bboxes),
         'predicted_age_range' : pred_age,
@@ -132,8 +139,7 @@ def validate_without_age(path, gender):
 
     # Validation for multiple faces, non-humman faces
     if len(bboxes) != 1:
-        print("No face detected or multiple faces detected.")
-        return {'message': "No face detected or multiple faces detected.",
+        return {'message': "Profile photo not varified because no face detected or multiple faces detected in the photo.",
                 'is_valid' : False }
 
     # Get gender
@@ -154,11 +160,16 @@ def validate_without_age(path, gender):
         # return False  # Gender does not match
 
     if pred_gender == gender and len(bboxes) == 1:
+        msg = "Profile photo successfully varified"
         is_valid = True
     else:
         is_valid = False
     
+    if not(pred_gender == gender):
+        msg = "Profile photo not verified because the predicted gender does not match the given gender value"
+
     resp = {
+        'message' :msg,
         'is_valid' : is_valid,
         'number_of_faces' : len(bboxes),
         'predicted_gender' : pred_gender 
